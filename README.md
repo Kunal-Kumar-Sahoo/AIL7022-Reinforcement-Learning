@@ -2,8 +2,8 @@
 
 This repository contains the asssignment and their solutions for the Reinforcement Learning course offered by IIT Delhi.
 
-**Instructor:** Prof. Raunak Bhattacharya
-**Course Page:** 
+**Instructor:** [Prof. Raunak Bhattacharya](https://web.iitd.ac.in/~raunakbh/)
+**Course Page:** https://web.iitd.ac.in/~raunakbh/deep-rl/fall25/coursepage.html
 
 **Assignment Details:**
 1. Assignment-1: **Policy Iteration and Value Iteration**
