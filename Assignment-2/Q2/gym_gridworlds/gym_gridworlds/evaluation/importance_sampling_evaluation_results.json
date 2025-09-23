@@ -1,0 +1,27 @@
+// these are just sample values
+{
+    "TD0_ImportanceSampling(0.0)": {
+        "mean": 1.0,
+        "std": 1.0
+    },
+    "TD0_ImportanceSampling(0.1)": {
+        "mean": 1.0,
+        "std": 1.0
+    },
+    "TD0_ImportanceSampling(0.01)": {
+        "mean": 1.0,
+        "std": 1.0
+    },
+    "MC_ImportanceSampling(0.0)": {
+        "mean": 1.0,
+        "std": 1.0
+    },
+    "MC_ImportanceSampling(0.1)": {
+        "mean": 1.0,
+        "std": 1.0
+    },
+    "MC_ImportanceSampling(0.01)": {
+        "mean": 1.0,
+        "std": 1.0
+    }
+}

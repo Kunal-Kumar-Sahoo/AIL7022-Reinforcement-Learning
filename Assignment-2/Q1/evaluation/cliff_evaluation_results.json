@@ -1,0 +1,15 @@
+// these are just sample values
+{
+    "QLearning": {
+        "mean": 1.0, 
+        "std": 1.0
+    },
+    "Sarsa": {
+        "mean": 1.0, 
+        "std": 1.0
+    },
+    "ExpectedSarsa": {
+        "mean": 1.0, 
+        "std": 1.0
+    },
+}

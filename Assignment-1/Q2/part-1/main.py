@@ -1,6 +1,6 @@
 import os
 import sys
-sys.path.append('/Users/kunalkumarsahoo/Playground/IITD/RL/Assignment-1/Q2/or_gym')
+sys.path.append('~/Playground/IITD/AIL7022/Assignment-1/Q2/or_gym')
 
 import csv
 import time
@@ -235,13 +235,14 @@ if __name__ == '__main__':
         env.step_limit = horizon
         print(f'\nState space: {(env.step_limit, env.max_weight, env.N)}')
 
-        vi = ValueIterationOnlineKnapsack(env)
+        # vi = ValueIterationOnlineKnapsack(env)
         pi = PolicyIterationOnlineKnapsack(env)
 
-        v_vi, pi_vi = vi.run()
+        # v_vi, pi_vi = vi.run()
         v_pi, pi_pi = pi.run()
 
-        for algo, policy, value_fn in [('VI', pi_vi, v_vi), ('PI', pi_pi, v_pi)]:
+        # for algo, policy, value_fn in [('VI', pi_vi, v_vi), ('PI', pi_pi, v_pi)]:
+        for algo, policy, value_fn in [('PI', pi_pi, v_pi)]:
             trajectories = []
             final_values = []
 
@@ -308,35 +309,35 @@ if __name__ == '__main__':
 
             plot_value_heatmaps(env, value_fn, f'{algo.lower()}_heatmap_horizon_{horizon}')
 
-        for horizon in [10, 50, 500]:
-            env = OnlineKnapsackEnv()
-            env.step_limit = horizon
-            print(f'\nRunning Value Iteration with horizon {horizon}')
+        # for horizon in [10, 50, 500]:
+        #     env = OnlineKnapsackEnv()
+        #     env.step_limit = horizon
+        #     print(f'\nRunning Value Iteration with horizon {horizon}')
 
-            vi = ValueIterationOnlineKnapsack(env)
-            v_vi, pi_vi = vi.run()
+        #     vi = ValueIterationOnlineKnapsack(env)
+        #     v_vi, pi_vi = vi.run()
 
-            env.set_seed(0)
-            state = env.reset()
-            current_weight = state['state'][0]
-            current_item = state['state'][1]
-            total_value = 0
-            values = []
+        #     env.set_seed(0)
+        #     state = env.reset()
+        #     current_weight = state['state'][0]
+        #     current_item = state['state'][1]
+        #     total_value = 0
+        #     values = []
 
-            for time_step in range(env.step_limit):
-                action = pi_vi[time_step, current_weight, current_item]
-                next_state, reward, done, _ = env.step(action)
-                total_value += reward
-                values.append(total_value)
+        #     for time_step in range(env.step_limit):
+        #         action = pi_vi[time_step, current_weight, current_item]
+        #         next_state, reward, done, _ = env.step(action)
+        #         total_value += reward
+        #         values.append(total_value)
 
-                current_weight = next_state['state'][0]
-                current_item = next_state['state'][1]
-                state = next_state
+        #         current_weight = next_state['state'][0]
+        #         current_item = next_state['state'][1]
+        #         state = next_state
 
-                if done:
-                    break
+        #         if done:
+        #             break
 
-            writer.writerow(['VI', horizon, 0, total_value, values,
-                             '', '', '', ''])
+        #     writer.writerow(['VI', horizon, 0, total_value, values,
+        #                      '', '', '', ''])
 
-            plot_value_heatmaps(env, v_vi, f'value_iteration_heatmap_horizon_{horizon}')
+        #     plot_value_heatmaps(env, v_vi, f'value_iteration_heatmap_horizon_{horizon}')

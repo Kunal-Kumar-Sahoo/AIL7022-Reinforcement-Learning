@@ -1,0 +1,19 @@
+// these are just sample values
+{
+    "QLearning(0, 3)": {
+        "mean": 1.0, 
+        "std": 1.0
+    },
+    "MonteCarloOnPolicy(0, 3)": {
+        "mean": 1.0, 
+        "std": 1.0
+    },
+    "QLearning(0, 5)": {
+        "mean": 1.0, 
+        "std": 1.0
+    },
+    "MonteCarloOnPolicy(0, 5)": {
+        "mean": 1.0, 
+        "std": 1.0
+    }
+}
