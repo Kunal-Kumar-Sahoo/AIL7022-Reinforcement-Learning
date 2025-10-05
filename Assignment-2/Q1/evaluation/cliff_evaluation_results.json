@@ -1,15 +1,14 @@
-// these are just sample values
 {
-    "QLearning": {
-        "mean": 1.0, 
-        "std": 1.0
+    "qlearning": {
+        "mean": 173.5,
+        "std": 1.118033988749895
     },
-    "Sarsa": {
-        "mean": 1.0, 
-        "std": 1.0
+    "sarsa": {
+        "mean": 170.96,
+        "std": 22.564981719469664
     },
-    "ExpectedSarsa": {
-        "mean": 1.0, 
-        "std": 1.0
-    },
+    "expected_sarsa": {
+        "mean": 166.51,
+        "std": 35.09486999548509
+    }
 }

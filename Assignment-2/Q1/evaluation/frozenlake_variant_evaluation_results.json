@@ -1,19 +1,22 @@
-// these are just sample values
 {
-    "QLearning(0, 3)": {
-        "mean": 1.0, 
-        "std": 1.0
+    "(0, 3)": {
+        "mc": {
+            "mean": 0.7000000000000002,
+            "std": 2.220446049250313e-16
+        },
+        "qlearning": {
+            "mean": 0.7000000000000002,
+            "std": 2.220446049250313e-16
+        }
     },
-    "MonteCarloOnPolicy(0, 3)": {
-        "mean": 1.0, 
-        "std": 1.0
-    },
-    "QLearning(0, 5)": {
-        "mean": 1.0, 
-        "std": 1.0
-    },
-    "MonteCarloOnPolicy(0, 5)": {
-        "mean": 1.0, 
-        "std": 1.0
+    "(0, 5)": {
+        "mc": {
+            "mean": 0.75,
+            "std": 0.0
+        },
+        "qlearning": {
+            "mean": 0.75,
+            "std": 0.0
+        }
     }
 }
