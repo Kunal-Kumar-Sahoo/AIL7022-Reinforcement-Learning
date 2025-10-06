@@ -1,206 +1,158 @@
+import sys
+# sys.path.append('/Users/kunalkumarsahoo/Playground/IITD/AIL7022/Assignment-2/Q2/gym_gridworlds')
+
 import gymnasium
 import gym_gridworlds
 import numpy as np
 import random
 import imageio
 import os
+import json
 import matplotlib.pyplot as plt 
 from collections import defaultdict
 from gymnasium.envs.registration import register
 from behaviour_policies import create_behaviour
-
-GRID_ROWS = 4
-GRID_COLS = 5
-
-# Register the custom environment
-register(
-    id="Gym-Gridworlds/Full-4x5-v0",
-    entry_point="gym_gridworlds.gridworld:Gridworld",
-    max_episode_steps=500,
-    kwargs={"grid": "4x5_full"},
-)
-
-def set_global_seed(seed: int):
-    """Set seed for reproducibility across modules."""
-    random.seed(seed)
-    np.random.seed(seed)
-    os.environ["PYTHONHASHSEED"] = str(seed)
-
-def state_to_cord(state):
-    """Convert state number to (row, col) coordinates."""
-    return divmod(state, GRID_COLS)
-
-def cord_to_state(row, col):
-    """Convert (row, col) coordinates to state number."""
-    return row * GRID_COLS + col
+from utils import setup_environment, set_global_seed, evaluate_policy
+from graphics import generate_policy_gif, plot_reward_curve
 
 
-behavior_Q = create_behaviour()
-
-def tdis(env, num_episodes, seed, gamma, alpha):
+def tdis(env, behavior_Q, num_episodes, gamma, initial_alpha, initial_temp, seed):
     """
-    Implement Temporal Difference learning with Importance Sampling (TDIS).
-    
-    This is an off-policy TD control method that uses importance sampling
-    to correct for the difference between behavior and target policies.
-    
-    Args:
-        env: The environment
-        num_episodes: Number of episodes to train
-        seed: Random seed for episode generation
-        gamma: Discount factor
-        alpha: Learning rate
-        
-    Returns:
-        Q: Action-value function (dict of state -> array of action values)
-        final_policy: Final deterministic policy (array)
+    Implement Off-Policy TD(0) Control with Importance Sampling (SARSA).
+    This version includes rho clipping for stability and returns reward history.
     """
+    n_actions = env.action_space.n
+    n_states = env.observation_space.n
     
-    # TODO: Initialize Q-values 
-    # Hint: Use defaultdict with lambda to create zero arrays for new states
-    Q = # YOUR CODE HERE
+    Q = defaultdict(lambda: np.zeros(n_actions))
+    min_alpha = 0.1
+    min_temp = 0.1
+    episode_rewards = []
+
+    def get_target_probs(state, temp):
+        """Calculates action probabilities for a state using the softmax function."""
+        q_values = Q[state]
+        max_q = np.max(q_values)
+        exp_q = np.exp((q_values - max_q) / temp)
+        return exp_q / np.sum(exp_q)
     
-    def target_policy(state):
-        """
-        TODO: Implement the target policy
-        
-        Args:
-            state: Current state
-            
-        Returns:
-            action: Action to take (integer)
-        """
-        return # YOUR CODE HERE
+    def select_action_from_target_policy(state, temp):
+        """Selects a single action based on the softmax target policy."""
+        probs = get_target_probs(state, temp)
+        return np.random.choice(np.arange(n_actions), p=probs)
 
     def behavior_policy(state):
-        """
-        TODO: Implement the behavior policy
-        
-        Args:
-            state: Current state
-            
-        Returns:
-            action: Action to take (integer)
-        """
-        return # YOUR CODE HERE
+        """Selects an action based on the provided behavior policy."""
+        return np.random.choice(np.arange(n_actions), p=behavior_Q[state])
 
-    def get_behavior_prob(state, action):
-        """TODO: Get the probability of taking action in state under behavior policy."""
-        pass
-
-    def get_target_prob(state, action):
-        """
-        TODO: Get the probability of taking action in state under target policy
-        
-        Args:
-            state: Current state
-            action: Action taken
-            
-        Returns:
-            probability
-        """
-        return # YOUR CODE HERE
-            
-    return Q, final_policy
-
-def evaluate_policy(env, policy, n_episodes=100, max_steps=500):
-    """
-    Evaluate a given policy by running it for multiple episodes.
-    
-    Args:
-        env: The environment
-        policy: Policy to evaluate (array of actions for each state)
-        n_episodes: Number of episodes to evaluate
-        max_steps: Maximum steps per episode
-        
-    Returns:
-        tuple: (mean_reward, min_reward, max_reward, std_reward, success_rate)
-    """
-    rewards = []
-    success_rate = 0
-
-    for episode in range(n_episodes):
-        state, _ = env.reset(seed=episode)
+    # Main training loop
+    for i in range(num_episodes):
+        state, _ = env.reset(seed=seed + i)
         done = False
-        episode_reward = 0
-        steps = 0
         
-        while not done and steps < max_steps:
-            action = policy[state]
-            state, reward, terminated, truncated, _ = env.step(action)
-            episode_reward += reward
+        alpha = max(min_alpha, initial_alpha * (1 - (i / num_episodes)))
+        temp = max(min_temp, initial_temp * (0.999**i))
+
+        while not done:
+            action = behavior_policy(state)
+            next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
-            steps += 1
+
+            prob_target = get_target_probs(state, temp)[action]
+            prob_behavior = behavior_Q[state][action]
+            rho = prob_target / prob_behavior if prob_behavior > 0 else 0
+            rho = min(rho, 1.0) # Clip rho for stability
+
+            # Correct, stable update rule
+            next_action = select_action_from_target_policy(next_state, temp)
+            td_target = reward + gamma * Q[next_state][next_action] * (not done)
+            td_error = td_target - Q[state][action]
+
+            Q[state][action] += alpha * td_error
             
-        rewards.append(episode_reward)
-        
-        # Consider episode successful if reward > 0.5
-        if episode_reward > 0.5:
-            success_rate += 1
+            state = next_state
+            
+        # For plotting, evaluate the current greedy policy every 10 episodes
+        if i % 200 == 0:
+            current_policy = np.array([np.argmax(Q[s]) if s in Q else 0 for s in range(n_states)])
+            mean_eval_reward, _, _, _, _ = evaluate_policy(env, current_policy, n_episodes=10)
+            episode_rewards.append(mean_eval_reward)
+            print(f'[Episode {i}/{num_episodes}] Mean Eval Reward: {mean_eval_reward:.3f}')
+            
+    final_policy = np.array([np.argmax(Q[s]) if s in Q else 0 for s in range(n_states)])
+    return Q, final_policy, episode_rewards
 
-    return (np.mean(rewards), np.min(rewards), np.max(rewards), 
-            np.std(rewards), success_rate / n_episodes)
-
-def generate_policy_gif(env, policy, filename='policy_run_tdis.gif', max_steps=500):
-    """Generate a GIF showing the policy in action."""
-    # TODO:
-    
-    frames = []
-    print(f"\nGenerating GIF... saving to {filename}")
-    
-    env_render = gymnasium.make(env.spec.id, render_mode='rgb_array', random_action_prob=0.1)
-    state, _ = env_render.reset()
-    done = False
-    steps = 0
-    
-    while not done and steps < max_steps:
-        frames.append(env_render.render())
-        
-        
-    env_render.close()
-    
-    imageio.mimsave(filename, frames, fps=3)
-    print(f"GIF saved successfully to {os.path.abspath(filename)}")
 
 if __name__ == '__main__':
-    # Training parameters
-    num_seeds = 10  
-    um_episodes = 1  # TODO:CHANGE TO SUITABLE VALUE
+    # Create directories for outputs
+    os.makedirs("plots", exist_ok=True)
+    os.makedirs("gifs", exist_ok=True)
+    os.makedirs("evaluation", exist_ok=True)
     
-    env = gymnasium.make('Gym-Gridworlds/Full-4x5-v0', random_action_prob=0.1)
+    # --- Parameters ---
+    NOISE_LEVELS = [0.0, 0.01, 0.1]
+    NUM_SEEDS = 10
+    NUM_EPISODES = 50000 
+    GAMMA = 0.99
+    INITIAL_ALPHA = 0.8
+    INITIAL_TEMPERATURE = 5.0
     
-    best_policy = None
-    best_q_values = None
-    
-    print(f"--- Starting training across {num_seeds} seeds ---")
+    ENV_ID = setup_environment()
+    env = gymnasium.make(ENV_ID, random_action_prob=0.1)
 
-    for seed in range(num_seeds):
-        print(f"\n--- Training Seed {seed + 1}/{num_seeds} ---")
-        set_global_seed(seed)
+    json_filename = 'evaluation/importance_sampling_evaluation_results.json'
+    evaluation_results = {}
+    if os.path.exists(json_filename):
+        with open(json_filename, 'r') as f:
+            evaluation_results = json.load(f)
+
+    for noise in NOISE_LEVELS:
+        print(f"\n{'='*50}")
+        print(f"STARTING EXPERIMENT FOR NOISE LEVEL: {noise}")
+        print(f"{'='*50}")
         
-        # Train the policy
-        q_values, policy = tdis(env, num_episodes, seed)
+        behavior_Q = create_behaviour(noise=noise)
+        all_seeds_rewards = []
+        best_policy_for_noise = None
+        best_q_for_noise = None
+        best_eval_reward_for_noise = -np.inf
+
+        for seed in range(NUM_SEEDS):
+            print(f"\n--- [Noise: {noise}] Training Seed {seed + 1}/{NUM_SEEDS} ---")
+            set_global_seed(seed)
+            
+            q_values, policy, reward_history = tdis(
+                env, behavior_Q, NUM_EPISODES, GAMMA, INITIAL_ALPHA, INITIAL_TEMPERATURE, seed
+            )
+            all_seeds_rewards.append(reward_history)
+            
+            mean_reward, _, _, _, _ = evaluate_policy(env, policy, n_episodes=100)
+            
+            if mean_reward > best_eval_reward_for_noise:
+                best_eval_reward_for_noise = mean_reward
+                best_policy_for_noise = policy
+                best_q_for_noise = q_values
+                print(f"Found new best policy for this noise level.")
+
+        # --- Learning Analysis ---
+        plot_reward_curve(all_seeds_rewards, noise, 'Temporal Difference', 'plots')
         
-        # Evaluate the trained policy
-        mean_reward, min_reward, max_reward, std_reward, success_rate = evaluate_policy(env, policy)
+        # --- Evaluation Phase ---
+        print(f"\nEvaluating best policy for noise level {noise}...")
+        mean_rew, _, _, std_rew, _ = evaluate_policy(env, best_policy_for_noise, n_episodes=100)
+        evaluation_results[f"td_{noise}"] = {
+            "mean": mean_rew,
+            "std": std_rew
+        }
+        print(f"Final Evaluation: Mean={mean_rew:.3f}, Std={std_rew:.3f}")
         
-        print(f"\nResults: Mean={mean_reward:.3f}, Min={min_reward:.3f}, "
-              f"Max={max_reward:.3f}, Std={std_reward:.3f}, Success Rate={success_rate:.3f}")
-       
-    action_map = {0: 'Up', 1: 'Down', 2: 'Left', 3: 'Right', 4: 'Stay'}
-    
-    print("\nBest Optimal Policy (Action to take in each state):")
-    if best_policy is not None:
-        policy_grid = np.array([action_map[i] for i in best_policy]).reshape(GRID_ROWS, GRID_COLS)
-        print(policy_grid)
-        
-        print("\nQ-values for State 0 (top-left) from the best policy:")
-        if 0 in best_q_values:
-            for action, value in enumerate(best_q_values[0]):
-                print(f"  Action: {action_map[action]}, Q-value: {value:.3f}")
-        
-        generate_policy_gif(env, best_policy, seed=1, filename='best_policy_run_tdis.gif')
-    else:
-        print("No successful policy was trained.")
+        # --- Policy Demonstration ---
+        gif_filename = f"gifs/temporal_difference_gif_{noise}.gif"
+        generate_policy_gif(env, best_policy_for_noise, gif_filename)
+
+    # --- Final Reporting ---
+    with open(json_filename, 'w') as f:
+        json.dump(evaluation_results, f, indent=4)
+    print(f"\nAll experiments complete. Evaluation results saved to {json_filename}")
 
     env.close()
