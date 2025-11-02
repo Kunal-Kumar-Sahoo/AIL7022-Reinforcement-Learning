@@ -1,0 +1,45 @@
+
+--------------------------------------------------
+Task 1: Report
+--------------------------------------------------
+1. Model and Hyperparameters:
+   - Algorithm: DQN (Vanilla)
+   - Network: 3-Layer MLP (12 -> 1024 -> 1024 -> 3125)
+   - Optimizer: AdamW (LR=0.0001)
+   - Loss: MSELoss
+   - Replay Memory: 10000
+   - Batch Size: 256
+   - Gamma: 1.0
+   - Exploration: Boltzmann (Temp: 5.0 -> 0.1)
+   - Target Update: Soft (TAU=0.005)
+   - Training Episodes: 10000
+
+2. Plotting Loss Curve for Task 1...
+
+3. Plotting Evaluation Wealth Curve for Task 1...
+
+4. Mean Total Wealth at T=10: 74.18
+5. Ratio (Mean / Std Dev): 4.32
+
+
+--------------------------------------------------
+Task 2: Report
+--------------------------------------------------
+1. Model and Hyperparameters:
+   - Algorithm: DQN (Vanilla)
+   - Network: 3-Layer MLP (12 -> 1024 -> 1024 -> 3125)
+   - Optimizer: AdamW (LR=0.0001)
+   - Loss: MSELoss
+   - Training Episodes: 10000
+
+2. Plotting Loss Curve for Task 2...
+
+3. Plotting Evaluation Wealth Curve for Task 2...
+
+4. Mean Total Wealth at T=10: 74.25
+5. Mean Wealth: 64.96
+   Std Dev: 14.26
+   Ratio (Mean / Std Dev): 4.55
+
+==================================================
+Total execution time: 87.50 minutes
