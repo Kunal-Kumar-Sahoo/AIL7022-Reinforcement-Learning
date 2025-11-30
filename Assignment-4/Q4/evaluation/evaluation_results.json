@@ -1,0 +1,12 @@
+{
+    "Actor-Critic": {
+        "wall_time": 272.35634875297546,
+        "eval_mean_reward": 192.31665668667762,
+        "eval_reward_std": 20.188058823322418
+    },
+    "DQN": {
+        "wall_time": 857.5650968551636,
+        "eval_mean_reward": 180.48129346498507,
+        "eval_reward_std": 48.64583887483613
+    }
+}
